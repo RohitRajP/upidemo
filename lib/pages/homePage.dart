@@ -135,28 +135,34 @@ class _HomePageState extends State<HomePage> {
       builder: (context, data, child) {
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: 40.0),
-          child: Container(
-            child: GridView.builder(
-              shrinkWrap: true,
-              itemCount: data.getUPIAppList().length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 20.0,
-                crossAxisSpacing: 30.0,
-              ),
-              itemBuilder: (BuildContext context, int index) {
-                return Container(
-                  child: InkWell(
-                    child: Image.memory(data.getUPIAppList()[index].icon,
-                        width: 20, height: 20),
-                    onTap: () {
-                      processTapOnUPIIcon(data.getUPIAppList()[index]);
+          child: (data.getUPIAppList().length != 0)
+              ? Container(
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    itemCount: data.getUPIAppList().length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      mainAxisSpacing: 20.0,
+                      crossAxisSpacing: 30.0,
+                    ),
+                    itemBuilder: (BuildContext context, int index) {
+                      return Container(
+                        child: InkWell(
+                          child: Image.memory(data.getUPIAppList()[index].icon,
+                              width: 20, height: 20),
+                          onTap: () {
+                            processTapOnUPIIcon(data.getUPIAppList()[index]);
+                          },
+                        ),
+                      );
                     },
                   ),
-                );
-              },
-            ),
-          ),
+                )
+              : Text(
+                  "No UPI based applications found on your device",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 20.0),
+                ),
         );
       },
     );
