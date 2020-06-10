@@ -7,18 +7,52 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
+
+  // helps shuffle the UPI list to identify the order to show and which apps are installed
+  Future<void> shuffleUPIList() async {
+    var homePageModel = Provider.of<HomePageModel>(context, listen: false);
+    // gets the list of preset apps
+    Map<String, Map<String, dynamic>> _presetUPIs =
+        homePageModel.getPresetUPIList();
+    List<ApplicationMeta> _installedUPIApps = homePageModel.getUPIAppList();
+    if (_installedUPIApps.length > 0) {
+      for (int i = 0; i < _presetUPIs.length; i++) {
+        // print(i.toString());
+        for (int j = 0; j < _installedUPIApps.length; j++) {
+          // print(_presetUPIs[_presetUPIs.keys.elementAt(i)]["packageName"]);
+          // print(_installedUPIApps[j].packageName);
+          if (_presetUPIs[_presetUPIs.keys.elementAt(i)]["packageName"] ==
+              _installedUPIApps[j].packageName) {
+            // print(_installedUPIApps[j].packageName);
+            // print(_presetUPIs[_presetUPIs.keys.elementAt(i)]["packageName"]);
+            _presetUPIs[_presetUPIs.keys.elementAt(i)]["installed"] = true;
+            _presetUPIs[_presetUPIs.keys.elementAt(i)]["upiApplication"] =
+                _installedUPIApps[j].upiApplication;
+          }
+        }
+      }
+    }
+    homePageModel.updatPresetUPIList(_presetUPIs);
+  }
+
   // gets list of UPI applications installed and loads UPI options
   void loadUPIOptions() async {
     var homePageModel = Provider.of<HomePageModel>(context, listen: false);
     List<ApplicationMeta> upiApps = await UpiPay.getInstalledUpiApplications();
     homePageModel.modifyUPIAppsList(upiApps);
+    await shuffleUPIList();
     homePageModel.flipisLoadingValue();
   }
 
   // handles the tapping of UPI icon
-  void processTapOnUPIIcon(ApplicationMeta tappedUPIApp) async {
+  void processTapOnUPIIcon(int index) async {
+    var homePageModel = Provider.of<HomePageModel>(context, listen: false);
+    Map<String, Map<String, dynamic>> presetUPIList =
+        homePageModel.getPresetUPIList();
+    UpiApplication upiApplication =
+        presetUPIList[presetUPIList.keys.elementAt(index)]["upiApplication"];
     UpiTransactionResponse txnResponse = await UpiPay.initiateTransaction(
-        app: tappedUPIApp.upiApplication,
+        app: upiApplication,
         receiverUpiAddress: "rrjp@ybl",
         receiverName: "Rohit",
         transactionNote: "Payment for ORD1215236",
@@ -55,6 +89,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    print("==================BUILD FROM SCRATCH================");
     return Scaffold(
       key: scaffoldKey,
       appBar: AppBar(
@@ -88,16 +123,18 @@ class _HomePageState extends State<HomePage> {
   // holds the view after the UPI apps installed have been loaded
   Widget upiAppsLoadedView() {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
+      padding: EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0),
+      child: ListView(
+        physics: BouncingScrollPhysics(),
         children: <Widget>[
           demoMessage(),
           SizedBox(
-            height: 40.0,
+            height: 20.0,
           ),
           upiAppsGridView(),
+          SizedBox(
+            height: 30.0,
+          ),
         ],
       ),
     );
@@ -110,18 +147,17 @@ class _HomePageState extends State<HomePage> {
         textAlign: TextAlign.left,
         text: TextSpan(children: [
           TextSpan(
-            text: "You will be sending ₹2 to UPI ID rrjp@ylb\n\n",
+            text: "Merchant UPI ID rrjp@ylb\n\n",
             style: TextStyle(
                 color: Colors.green,
                 fontSize: 22.0,
                 fontWeight: FontWeight.bold),
           ),
           TextSpan(
-            text:
-                "Choose any from all the UPI enabled applications installed in your device",
+            text: "Payment Methods:",
             style: TextStyle(
               color: Colors.black,
-              fontSize: 14.0,
+              fontSize: 18.0,
             ),
           )
         ]),
@@ -133,36 +169,58 @@ class _HomePageState extends State<HomePage> {
   Widget upiAppsGridView() {
     return Consumer<HomePageModel>(
       builder: (context, data, child) {
-        return Padding(
-          padding: EdgeInsets.symmetric(horizontal: 40.0),
-          child: (data.getUPIAppList().length != 0)
-              ? Container(
-                  child: GridView.builder(
-                    shrinkWrap: true,
-                    itemCount: data.getUPIAppList().length,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: 20.0,
-                      crossAxisSpacing: 30.0,
+        return Container(
+          child: ListView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: data.getPresetUPIList().length,
+            itemBuilder: (BuildContext context, int index) {
+              Map<String, Map<String, dynamic>> _presetUPIs =
+                  data.getPresetUPIList();
+              List<ApplicationMeta> _installedUPIApps = data.getUPIAppList();
+
+              return Card(
+                child: InkWell(
+                  child: ListTile(
+                    leading: Container(
+                      height: 50.0,
+                      width: 50.0,
+                      child: Image.asset(
+                        _presetUPIs[_presetUPIs.keys.elementAt(index)]
+                            ["imgAddress"],
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                    itemBuilder: (BuildContext context, int index) {
-                      return Container(
-                        child: InkWell(
-                          child: Image.memory(data.getUPIAppList()[index].icon,
-                              width: 20, height: 20),
-                          onTap: () {
-                            processTapOnUPIIcon(data.getUPIAppList()[index]);
-                          },
-                        ),
-                      );
-                    },
+                    title: Text(_presetUPIs.keys.elementAt(index)),
+                    subtitle: (_presetUPIs[_presetUPIs.keys.elementAt(index)]
+                            ["installed"])
+                        ? Text(
+                            "Installed",
+                            style: TextStyle(color: Colors.green),
+                          )
+                        : Text("Not Installed"),
                   ),
-                )
-              : Text(
-                  "No UPI based applications found on your device",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 20.0),
+                  onTap: () {
+                    if (_presetUPIs[_presetUPIs.keys.elementAt(index)]
+                        ["installed"]) {
+                      processTapOnUPIIcon(index);
+                    } else {
+                      try {
+                        launch("market://details?id=" +
+                            _presetUPIs[_presetUPIs.keys.elementAt(index)]
+                                ["packageName"]);
+                      } on PlatformException catch (e) {
+                        launch(
+                            "https://play.google.com/store/apps/details?id=" +
+                                _presetUPIs[_presetUPIs.keys.elementAt(index)]
+                                    ["packageName"]);
+                      }
+                    }
+                  },
                 ),
+              );
+            },
+          ),
         );
       },
     );
