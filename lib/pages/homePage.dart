@@ -14,6 +14,7 @@ class _HomePageState extends State<HomePage> {
     // gets the list of preset apps
     Map<String, Map<String, dynamic>> _presetUPIs =
         homePageModel.getPresetUPIList();
+    Map<String, Map<String, dynamic>> _reorderedPresetUPIs = new Map();
     List<ApplicationMeta> _installedUPIApps = homePageModel.getUPIAppList();
     if (_installedUPIApps.length > 0) {
       for (int i = 0; i < _presetUPIs.length; i++) {
@@ -28,6 +29,10 @@ class _HomePageState extends State<HomePage> {
             _presetUPIs[_presetUPIs.keys.elementAt(i)]["installed"] = true;
             _presetUPIs[_presetUPIs.keys.elementAt(i)]["upiApplication"] =
                 _installedUPIApps[j].upiApplication;
+            // _reorderedPresetUPIs.addAll({
+            //   _presetUPIs.keys.elementAt(i):
+            //       _presetUPIs[_presetUPIs.keys.elementAt(i)]
+            // });
           }
         }
       }
