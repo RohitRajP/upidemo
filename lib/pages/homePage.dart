@@ -71,7 +71,7 @@ class _HomePageState extends State<HomePage> {
       message = "Transaction Completed!";
       sbrColor = Colors.green;
     } else if (txnResponse.status == UpiTransactionStatus.failure) {
-      message = "Transaction Failed!";
+      message = "Transaction incomplete";
       sbrColor = Colors.red;
     } else if (txnResponse.status == UpiTransactionStatus.submitted) {
       message = "Transaction Submitted!";
@@ -128,10 +128,13 @@ class _HomePageState extends State<HomePage> {
   // holds the view after the UPI apps installed have been loaded
   Widget upiAppsLoadedView() {
     return Padding(
-      padding: EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0),
+      padding: EdgeInsets.only(left: 20.0, right: 20.0),
       child: ListView(
         physics: BouncingScrollPhysics(),
         children: <Widget>[
+          SizedBox(
+            height: 20.0,
+          ),
           demoMessage(),
           SizedBox(
             height: 20.0,
